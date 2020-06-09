@@ -10,6 +10,8 @@ def show_linguistic_features(docs):
     """
     sep = ' '
     for d in docs:
+        print('text', (20 - 4) * sep, 'lemma_', (20 - 6) * sep, 'pos_', (20 - 4) * sep, 'tag_', (20 - 4) * sep, 'dep_',
+              (20 - 4) * sep, 'shape_', (20 - 6) * sep, 'is_alpha', 5 * sep, 'is_stop', 5 * sep, 'ent_type_')
         for token in d:
             print(token.text, (20 - len(token.text)) * sep, token.lemma_, (20 - len(token.lemma_)) * sep,
                   token.pos_,
@@ -82,7 +84,7 @@ def get_relation(ent):
         # Para si encuentra un verbo auxiliar o una entidad
         if anc.pos == 87 or anc.ent_type != 0:
             break
-        relation = anc.text + ' ' + relation
+        relation = anc.lemma_ + ' ' + relation
     return relation.strip()
 
 
@@ -112,35 +114,23 @@ def get_triples(ents):
                 print('Sale por 3. No implementado aun')
             else:
                 if is_relation(a, b):
-                    # START get_relation(a)
-                    relation = ''
-                    for anc in a.root.ancestors:
-                        if anc.dep_ == 'ROOT' or anc.ent_type != 0:
-                            break
-                        relation = anc.text + ' ' + relation
-                    relation = relation.strip()
-                    if len(relation) > 0:
-                        rel = (b, relation, a)
+                    if a.root.dep_.startswith('nsubj'):
+                        rel = (a, get_relation(b), b)
                         triples.append(rel)
-                    # END get_relation(a)
-
-                    relation = get_relation(b)
-                    if len(relation) > 0:
-                        rel = (a, relation, b)
+                    elif b.root.dep_.startswith('nsubj'):
+                        rel = (b, get_relation(a), a)
                         triples.append(rel)
     return triples
 
 
-if __name__ == '__main__':
-    # nlp = spacy.load("en_core_web_sm")
-    # nlp = spacy.load("en_core_web_md")
-    # Los modelos que aparecen arriba no reconocen todas las entidades
-    nlp = spacy.load("en_core_web_lg")
+def main(doc):
+    """
+    Separa el texto en las distintas oraciones.
+    Para cada oración extrae las entidades presentes y a continuación busca la relacion entre estas
 
-    text = "Michael Jordan is the president of the United States of America. Barack Obama played for the Chicago Bulls." \
-           "New York, which is in the east of America, is the most populated city in the United States of America"
-    doc = nlp(text)
-
+    :param doc: spacy.tokens.doc.Doc del texto completo a analizar
+    :return: triplas extraidas del texto (entidad, relacion, entidad)
+    """
     # sentences = text.split('.')  # No vale porque rompe las oraciones con 'Mr.'
     sentences = [sent.text for sent in doc.sents]
     # sentences = [sent.text.translate(str.maketrans('', '', string.punctuation)) for sent in doc.sents]
@@ -153,3 +143,19 @@ if __name__ == '__main__':
 
     # Lista de listas, una por cada oracion, cada una contiene las triplas (entidad, relacion, entidad) encontradas
     triples = [get_triples(sent) for sent in ent_sentences]
+
+    return triples
+
+
+if __name__ == '__main__':
+    # nlp = spacy.load("en_core_web_sm")
+    # nlp = spacy.load("en_core_web_md")
+    # Los modelos que aparecen arriba no reconocen todas las entidades
+    nlp = spacy.load("en_core_web_lg")
+
+    text = "Michael Jordan is the president of the United States of America. Barack Obama played for the Chicago " \
+           "Bulls. New York, which is in the east of America, is the most populated city in the United States of " \
+           "America. The Rolling Stones played in Coachella."
+
+    doc = nlp(text)
+    triples = main(doc)
