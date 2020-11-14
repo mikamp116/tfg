@@ -40,7 +40,7 @@ def entity_alignment(nlp, triples):  # not used
             triples.remove(triple)
 
 
-def main(text):
+def extraction(text):
     """
     Extract relations between entities present in the news item and packs them in (head, relation, tail) triples.
 
@@ -53,17 +53,21 @@ def main(text):
 
     text_resolved = resolve_coreferences(nlp, text)
 
-    print(text_resolved)
+    # print(text_resolved)
 
     doc = nlp(text_resolved)
     lemmatized_text = ' '.join([token.lemma_ if (token.pos == 100 or token.pos == 87) else token.text for token in doc])
-    print(lemmatized_text)
+    # print(lemmatized_text)
 
 
     with StanfordOpenIE() as client:
         triples_dict = client.annotate(lemmatized_text)
 
-    return [(d['subject'], d['relation'], d['object']) for d in triples_dict]
+    valid_ents = ['PERSON', 'NORP', 'FAC', 'ORG', 'GPE', 'LOC', 'PRODUCT', 'EVENT', 'WORK_OF_ART', 'LANGUAGE', 'DATE',
+                  'TIME']
+    entities = [ent.text for ent in doc.ents if ent.label_ in valid_ents]
+
+    return [(d['subject'], d['relation'], d['object']) for d in triples_dict], list(set(entities))
 
 
 if __name__ == '__main__':
@@ -85,5 +89,5 @@ if __name__ == '__main__':
             
             The company has already seen one of its most senior executives depart and another placed on administrative leave."""
 
-    triples = main(text)
+    triples = extraction(text)
     print(triples)
