@@ -81,7 +81,10 @@ def get_wikipedia_results(entity, num_words=None, hops=0):
         for child in content.children:
             if child.name == 'p':
                 text += child.get_text()
-                links.append(child.find_all('a'))
+                a_s = child.find_all('a')
+                for link in a_s:
+                    #if links.:
+                    links.append(link)
 
         text += get_wikipedia_results_recursive(hops - 1, links)
     else:
@@ -114,7 +117,7 @@ def get_wikipedia_results(entity, num_words=None, hops=0):
 
 #     Hay que hacer una plantilla para Wikipedia en la que se cojan el texto únicamente y se excluyan elementos como
 # las notas al pie de foto o las referencias. La extracción de triplas también debe devolver las entidades
-#
+# RCufHshu67bVZq
 
 def get_wikipedia_results_recursive(hops, urls):
 
@@ -123,31 +126,51 @@ def get_wikipedia_results_recursive(hops, urls):
     if hops > 0:
         links = []
         for link_list in urls:
-            for link in link_list:
-                url = 'https://en.wikipedia.org/' + link['href']
-                html = requests.get(url, headers={'User-Agent': 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:74.0) '
-                                                                'Gecko/20100101 Firefox/74.0'})
+            # for link in link_list:
+            #     url = 'https://en.wikipedia.org/' + link['href']
+            #     html = requests.get(url, headers={'User-Agent': 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:74.0) '
+            #                                                     'Gecko/20100101 Firefox/74.0'})
+            #
+            #     content = Bs(html.text).find(class_='mw-parser-output')
+            #
+            #     for child in content.children:
+            #         if child.name == 'p':
+            #             text += child.get_text()
+            #             links.append(child.find_all('a'))
 
-                content = Bs(html.text).find(class_='mw-parser-output')
+            url = 'https://en.wikipedia.org/' + link_list['href']
+            html = requests.get(url, headers={'User-Agent': 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:74.0) '
+                                                            'Gecko/20100101 Firefox/74.0'})
 
-                for child in content.children:
-                    if child.name == 'p':
-                        text += child.get_text()
-                        links.append(child.find_all('a'))
+            content = Bs(html.text).find(class_='mw-parser-output')
+
+            for child in content.children:
+                if child.name == 'p':
+                    text += child.get_text()
+                    links.append(child.find_all('a'))
 
         text += get_wikipedia_results_recursive(hops - 1, links)
     else:
         for link_list in urls:
-            for link in link_list:
-                url = 'https://en.wikipedia.org/' + link['href']
-                html = requests.get(url, headers={'User-Agent': 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:74.0) '
-                                                                'Gecko/20100101 Firefox/74.0'})
+            # for link in link_list:
+            #     url = 'https://en.wikipedia.org/' + link['href']
+            #     html = requests.get(url, headers={'User-Agent': 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:74.0) '
+            #                                                     'Gecko/20100101 Firefox/74.0'})
+            #
+            #     content = Bs(html.text).find(class_='mw-parser-output')
+            #
+            #     for child in content.children:
+            #         if child.name == 'p':
+            #             text += child.get_text()
+            url = 'https://en.wikipedia.org/' + link_list['href']
+            html = requests.get(url, headers={'User-Agent': 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:74.0) '
+                                                            'Gecko/20100101 Firefox/74.0'})
 
-                content = Bs(html.text).find(class_='mw-parser-output')
+            content = Bs(html.text).find(class_='mw-parser-output')
 
-                for child in content.children:
-                    if child.name == 'p':
-                        text += child.get_text()
+            for child in content.children:
+                if child.name == 'p':
+                    text += child.get_text()
 
     # text = ''
     #
@@ -196,6 +219,6 @@ if __name__ == '__main__':
     url = 'https://www.theguardian.com/world/commentisfree/2020/jul/27/europe-coronavirus-planet-climate'
     # news = get_news_data(url)
 
-    get_wikipedia_results('Leyen', hops=2)
+    text = get_wikipedia_results('Leyen', hops=1)
 
     sources = ['theguardian.com', 'bbc.com', 'news.sky.com', 'independent.co.uk']
