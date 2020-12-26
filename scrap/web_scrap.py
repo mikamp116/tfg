@@ -73,144 +73,65 @@ def get_wikipedia_results(entity, num_words=None, hops=0):
     html = requests.get(url,
         headers={'User-Agent': 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:74.0) Gecko/20100101 Firefox/74.0'})
 
-    content = Bs(html.text).find(class_='mw-parser-output')
+    content = Bs(html.text, features="lxml").find(class_='mw-parser-output')  # To get rid of this warning, pass the additional argument 'features="lxml"' to the BeautifulSoup constructor.
     text = ''
 
     if hops > 0:
         links = []
         for child in content.children:
             if child.name == 'p':
-                text += child.get_text()
+                text += re.sub(' +', ' ', child.get_text().replace("\n", " ")) + "\n"
                 a_s = child.find_all('a')
                 for link in a_s:
-                    #if links.:
-                    links.append(link)
+                    if link.has_attr("href"):
+                        if link["href"].startswith("/wiki/"):
+                            links.append(link)
 
         text += get_wikipedia_results_recursive(hops - 1, links)
     else:
         for child in content.children:
             if child.name == 'p':
-                text += child.get_text()
-
-    # num_parragraphs = len(content.findAll('p'))
-    #
-    # actual_p = content.find('p')
-    # text = actual_p.get_text()
-    # if hops > 0:
-    #     links = actual_p.find_all('a')
-    #     for i in range(num_parragraphs-1):
-    #         actual_p = actual_p.find_next_sibling("p")
-    #         text += actual_p.get_text()
-    #         links.append(actual_p.find_all('a'))
-    #
-    #     text += get_wikipedia_results_recursive(hops - 1, links)
-    # else:
-    #     for i in range(num_parragraphs-1):
-    #         actual_p = actual_p.find_next_sibling("p")
-    #         text += actual_p.get_text()
-
-    # results = [News(article.title, None, metadata['description'], re.sub("[\[].*[\]]", "", article.text),
-    #                 article.summary, summary_, None, None, None)]
+                text += re.sub(' +', ' ', child.get_text().replace("\n", " ")) + "\n"
 
     return text
 
 
 #     Hay que hacer una plantilla para Wikipedia en la que se cojan el texto únicamente y se excluyan elementos como
 # las notas al pie de foto o las referencias. La extracción de triplas también debe devolver las entidades
-# RCufHshu67bVZq
 
-def get_wikipedia_results_recursive(hops, urls):
+def get_wikipedia_results_recursive(hops, wiki_pages):
 
     text = ''
 
     if hops > 0:
         links = []
-        for link_list in urls:
-            # for link in link_list:
-            #     url = 'https://en.wikipedia.org/' + link['href']
-            #     html = requests.get(url, headers={'User-Agent': 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:74.0) '
-            #                                                     'Gecko/20100101 Firefox/74.0'})
-            #
-            #     content = Bs(html.text).find(class_='mw-parser-output')
-            #
-            #     for child in content.children:
-            #         if child.name == 'p':
-            #             text += child.get_text()
-            #             links.append(child.find_all('a'))
-
-            url = 'https://en.wikipedia.org/' + link_list['href']
+        for wiki in wiki_pages:
+            url = 'https://en.wikipedia.org/' + wiki['href']
             html = requests.get(url, headers={'User-Agent': 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:74.0) '
                                                             'Gecko/20100101 Firefox/74.0'})
 
-            content = Bs(html.text).find(class_='mw-parser-output')
+            content = Bs(html.text, features="lxml").find(class_='mw-parser-output')  # To get rid of this warning, pass the additional argument 'features="lxml"' to the BeautifulSoup constructor.
 
             for child in content.children:
                 if child.name == 'p':
-                    text += child.get_text()
-                    links.append(child.find_all('a'))
+                    text += re.sub(' +', ' ', child.get_text().replace("\n", " ")) + "\n"
+                    for link in child.find_all('a'):
+                        if link.has_attr("href"):
+                            if link["href"].startswith("/wiki/"):
+                                links.append(link)
 
         text += get_wikipedia_results_recursive(hops - 1, links)
     else:
-        for link_list in urls:
-            # for link in link_list:
-            #     url = 'https://en.wikipedia.org/' + link['href']
-            #     html = requests.get(url, headers={'User-Agent': 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:74.0) '
-            #                                                     'Gecko/20100101 Firefox/74.0'})
-            #
-            #     content = Bs(html.text).find(class_='mw-parser-output')
-            #
-            #     for child in content.children:
-            #         if child.name == 'p':
-            #             text += child.get_text()
-            url = 'https://en.wikipedia.org/' + link_list['href']
+        for wiki in wiki_pages:
+            url = 'https://en.wikipedia.org/' + wiki['href']
             html = requests.get(url, headers={'User-Agent': 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:74.0) '
                                                             'Gecko/20100101 Firefox/74.0'})
 
-            content = Bs(html.text).find(class_='mw-parser-output')
+            content = Bs(html.text, features="lxml").find(class_='mw-parser-output')  # To get rid of this warning, pass the additional argument 'features="lxml"' to the BeautifulSoup constructor.
 
             for child in content.children:
                 if child.name == 'p':
-                    text += child.get_text()
-
-    # text = ''
-    #
-    # if hops > 0:
-    #     links = []
-    #
-    #     for link in urls:
-    #         url = 'https://en.wikipedia.org/' + link['href']
-    #         html = requests.get(url, headers={'User-Agent': 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:74.0) '
-    #                                                         'Gecko/20100101 Firefox/74.0'})
-    #
-    #         content = Bs(html.text).find(class_='mw-parser-output')
-    #         pes = content.findAll('p')
-    #         num_parragraphs = len(pes)
-    #
-    #         actual_p = content.find('p')
-    #         text += actual_p.get_text()
-    #         links.append(actual_p.find_all('a'))
-    #         for i in range(num_parragraphs - 1):
-    #             actual_p = actual_p.find_next_sibling("p")
-    #             text += actual_p.get_text()
-    #             links.append(actual_p.find_all('a'))
-    #
-    #     text += get_wikipedia_results_recursive(hops - 1, links)
-    #
-    # else:
-    #     for link in urls:
-    #         url = 'https://en.wikipedia.org/' + link['href']
-    #         html = requests.get(url, headers={'User-Agent': 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:74.0) '
-    #                                                         'Gecko/20100101 Firefox/74.0'})
-    #
-    #         content = Bs(html.text).find(class_='mw-parser-output')
-    #         pes = content.findAll('p')
-    #         num_parragraphs = len(pes)
-    #
-    #         actual_p = content.find('p')
-    #         text += actual_p.get_text()
-    #         for i in range(num_parragraphs - 1):
-    #             actual_p = actual_p.find_next_sibling("p")
-    #             text += actual_p.get_text()
+                    text += re.sub(' +', ' ', child.get_text().replace("\n", " ")) + "\n"
 
     return text
 
