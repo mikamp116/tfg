@@ -65,15 +65,18 @@ def get_google_results(keywords, site):
     results = browser.find_elements_by_xpath("//div[@class='g']//div[@class='r']//a[not(@class)]")
     links = [result.get_attribute('href') for result in results]
     browser.close()
+
     return links
 
 
-def get_wikipedia_results(entity, num_words=None, hops=0):
+def get_wikipedia_results(entity, hops=0, num_links=None):
     url = 'https://en.wikipedia.org/wiki/' + entity
     html = requests.get(url,
-        headers={'User-Agent': 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:74.0) Gecko/20100101 Firefox/74.0'})
+                        headers={
+                            'User-Agent': 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:74.0) Gecko/20100101 Firefox/74.0'})
 
-    content = Bs(html.text, features="lxml").find(class_='mw-parser-output')  # To get rid of this warning, pass the additional argument 'features="lxml"' to the BeautifulSoup constructor.
+    content = Bs(html.text, features="lxml").find(class_='mw-parser-output')
+    # To get rid of this warning, pass the additional argument 'features="lxml"' to the BeautifulSoup constructor.
     text = ''
 
     if hops > 0:
@@ -81,13 +84,11 @@ def get_wikipedia_results(entity, num_words=None, hops=0):
         for child in content.children:
             if child.name == 'p':
                 text += re.sub(' +', ' ', child.get_text().replace("\n", " ")) + "\n"
-                a_s = child.find_all('a')
-                for link in a_s:
-                    if link.has_attr("href"):
-                        if link["href"].startswith("/wiki/"):
+                for link in child.find_all('a'):
+                    if link.has_attr("href") and num_links is not None:
+                        if link["href"].startswith("/wiki/") and len(links) < num_links:
                             links.append(link)
-
-        text += get_wikipedia_results_recursive(hops - 1, links)
+        text += get_wikipedia_results_recursive(hops - 1, links, num_links)
     else:
         for child in content.children:
             if child.name == 'p':
@@ -96,11 +97,9 @@ def get_wikipedia_results(entity, num_words=None, hops=0):
     return text
 
 
-#     Hay que hacer una plantilla para Wikipedia en la que se cojan el texto únicamente y se excluyan elementos como
-# las notas al pie de foto o las referencias. La extracción de triplas también debe devolver las entidades
+#     La extracción de triplas también debe devolver las entidades
 
-def get_wikipedia_results_recursive(hops, wiki_pages):
-
+def get_wikipedia_results_recursive(hops, wiki_pages, num_links=None):
     text = ''
 
     if hops > 0:
@@ -110,14 +109,15 @@ def get_wikipedia_results_recursive(hops, wiki_pages):
             html = requests.get(url, headers={'User-Agent': 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:74.0) '
                                                             'Gecko/20100101 Firefox/74.0'})
 
-            content = Bs(html.text, features="lxml").find(class_='mw-parser-output')  # To get rid of this warning, pass the additional argument 'features="lxml"' to the BeautifulSoup constructor.
+            content = Bs(html.text, features="lxml").find(class_='mw-parser-output')
+            # To get rid of this warning, pass the additional argument 'features="lxml"' to the BeautifulSoup constructor.
 
             for child in content.children:
                 if child.name == 'p':
                     text += re.sub(' +', ' ', child.get_text().replace("\n", " ")) + "\n"
                     for link in child.find_all('a'):
-                        if link.has_attr("href"):
-                            if link["href"].startswith("/wiki/"):
+                        if link.has_attr("href") and num_links is not None:
+                            if link["href"].startswith("/wiki/") and len(links) < num_links:
                                 links.append(link)
 
         text += get_wikipedia_results_recursive(hops - 1, links)
@@ -127,7 +127,8 @@ def get_wikipedia_results_recursive(hops, wiki_pages):
             html = requests.get(url, headers={'User-Agent': 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:74.0) '
                                                             'Gecko/20100101 Firefox/74.0'})
 
-            content = Bs(html.text, features="lxml").find(class_='mw-parser-output')  # To get rid of this warning, pass the additional argument 'features="lxml"' to the BeautifulSoup constructor.
+            content = Bs(html.text, features="lxml").find(class_='mw-parser-output')
+            # To get rid of this warning, pass the additional argument 'features="lxml"' to the BeautifulSoup constructor.
 
             for child in content.children:
                 if child.name == 'p':
@@ -140,6 +141,6 @@ if __name__ == '__main__':
     url = 'https://www.theguardian.com/world/commentisfree/2020/jul/27/europe-coronavirus-planet-climate'
     # news = get_news_data(url)
 
-    text = get_wikipedia_results('Leyen', hops=1)
+    text = get_wikipedia_results('Leyen', hops=2, num_links=100)
 
     sources = ['theguardian.com', 'bbc.com', 'news.sky.com', 'independent.co.uk']
