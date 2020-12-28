@@ -51,19 +51,74 @@ def get_news_data(url, num_words=None):
                 article.is_valid_body() and article.is_valid_url(), metadata['og']['site_name'], metadata['generator'])
 
 
-def get_google_results(keywords, site):
+def get_true_news(keywords):
+    sources = ['theguardian.com', 'bbc.com', 'news.sky.com', 'independent.co.uk']
+    links = [get_google_results(keywords, site) for site in sources]
+
+    # related news
+
+    return links
+
+
+def get_google_results(keywords, site, num_results=10):
     """Retrieves a list with the 10 first results of Google searching the given keywords in the specified site"""
-    browser = wd.Chrome('/home/mikamp116/Downloads/chromedriver')
+    browser = wd.Chrome('/home/mikamp116/Downloads/chromedriver86')
     url = 'https://www.google.com'
     browser.get(url)
 
+    google_cookies = [{'domain': '.google.com',
+  'expiry': 2146723199,
+  'httpOnly': False,
+  'name': 'CONSENT',
+  'path': '/',
+  'sameSite': 'None',
+  'secure': True,
+  'value': 'YES+ES.en+V9+BX'},
+ {'domain': 'www.google.com',
+  'expiry': 1609198685,
+  'httpOnly': False,
+  'name': 'UULE',
+  'path': '/',
+  'secure': True,
+  'value': 'a+cm9sZTogMQpwcm9kdWNlcjogMTIKdGltZXN0YW1wOiAxNjA5MTc3MDg1Mjc4MDAwCmxhdGxuZyB7CiAgbGF0aXR1ZGVfZTc6IDQwMjk3MTg0MgogIGxvbmdpdHVkZV9lNzogLTM4MTQ2NjI1Cn0KcmFkaXVzOiAxMjIzODgwCnByb3ZlbmFuY2U6IDYK'},
+ {'domain': '.google.com',
+  'expiry': 1624988274,
+  'httpOnly': True,
+  'name': 'NID',
+  'path': '/',
+  'sameSite': 'None',
+  'secure': True,
+  'value': '205=gebCYZ_OR8rpQHkm_wQ73bUFGsvgtHCpHre2lrSHWJ1Du1TWdZHIW25rKIo7ZcdT-BXmkPHjqoz1MElxO6ntiO1O_WX6xLJX9TiAg2xyhfn_vcoCO1h66rUb8GK6qusoMEHzLjGVAtcNcXvTHM00BbhOA2v9Vryobqh4UwRCM48'},
+ {'domain': 'www.google.com',
+  'expiry': 1609177685,
+  'httpOnly': False,
+  'name': 'DV',
+  'path': '/',
+  'secure': False,
+  'value': 'o_HnBf2pffsuYDWOpqAb4t3CJNumalfvuV7H4kDCogEAAAA'},
+ {'domain': '.google.com',
+  'expiry': 1624729084,
+  'httpOnly': True,
+  'name': 'CGIC',
+  'path': '/search',
+  'secure': False,
+  'value': 'IocBdGV4dC9odG1sLGFwcGxpY2F0aW9uL3hodG1sK3htbCxhcHBsaWNhdGlvbi94bWw7cT0wLjksaW1hZ2UvYXZpZixpbWFnZS93ZWJwLGltYWdlL2FwbmcsKi8qO3E9MC44LGFwcGxpY2F0aW9uL3NpZ25lZC1leGNoYW5nZTt2PWIzO3E9MC45'}]
+    for cookie in google_cookies:
+        browser.add_cookie(cookie)
+
     search_box = browser.find_element_by_name('q')
-    search = keywords + ' site:' + site
+    search = keywords + ' site:' + site + " -ext:xml"
     search_box.send_keys(search)
     search_box.submit()
 
-    results = browser.find_elements_by_xpath("//div[@class='g']//div[@class='r']//a[not(@class)]")
-    links = [result.get_attribute('href') for result in results]
+    links = []
+    for i in range(1, num_results + 1):
+        try:
+            links.append(browser.find_element_by_xpath(
+        "/html/body/div[7]/div[2]/div[10]/div[1]/div[2]/div/div[2]/div[2]/div/div/div[" + str(i) + "]/div/div[1]/a")
+        .get_attribute('href'))
+        except:
+            pass
     browser.close()
 
     return links
@@ -141,6 +196,8 @@ if __name__ == '__main__':
     url = 'https://www.theguardian.com/world/commentisfree/2020/jul/27/europe-coronavirus-planet-climate'
     # news = get_news_data(url)
 
-    text = get_wikipedia_results('Leyen', hops=2, num_links=100)
+    # text = get_wikipedia_results('Leyen', hops=2, num_links=100)
 
-    sources = ['theguardian.com', 'bbc.com', 'news.sky.com', 'independent.co.uk']
+    links = get_true_news("wannacry attacks corporation")
+
+    pass
