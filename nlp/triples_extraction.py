@@ -4,6 +4,8 @@ from openie import StanfordOpenIE
 import spacy
 import neuralcoref
 from summa import summarizer
+from tqdm import tqdm, trange
+from scrap import web_scrap as ws
 
 
 def resolve_coreferences(nlp, text):
@@ -47,7 +49,28 @@ def extraction(text):
     return [(d['subject'], d['relation'], d['object']) for d in triples_dict], list(set(entities))
 
 
-def printGraph(triples):
+def bulk_extraction(true_news_link_list):
+    nlp = spacy.load('en_core_web_lg')
+    neuralcoref.add_to_pipe(nlp)
+
+    with StanfordOpenIE() as client:
+        web_scrap_extraction = []
+        for keyword_urls in tqdm(true_news_link_list, desc="Extracting triples from true news articles..."):
+            for site_urls in keyword_urls:
+                for url in site_urls:
+                    article = ws.get_news_data(url)
+                    text_resolved = nlp(article.text)._.coref_resolved
+                    doc = nlp(text_resolved)
+                    lemmatized_text = ' '.join(
+                        [token.lemma_ if (token.pos == 100 or token.pos == 87) else token.text for token in doc])
+                    triples_dict = client.annotate(lemmatized_text)
+                    triple_list= [(d['subject'], d['relation'], d['object']) for d in triples_dict]
+
+                    web_scrap_extraction.append(triple_list)
+    return web_scrap_extraction
+
+
+def print_graph(triples):
     G = nx.Graph()
     for triple in triples:
         G.add_node(triple[0])
@@ -74,6 +97,7 @@ def printGraph(triples):
         plt.text(x, y, node, fontsize=d[node] * 3, ha='center', va='center')
     plt.savefig("filename6.png")
 
+
 if __name__ == '__main__':
     text = '''
     Unable either to stay in France or to move to Germany, Marx decided to emigrate to Brussels in Belgium in February 1845. However, to stay in Belgium he had to pledge not to publish anything on the subject of contemporary politics. In Brussels, Marx associated with other exiled socialists from across Europe, including Moses Hess, Karl Heinzen and Joseph Weydemeyer. In April 1845, Engels moved from Barmen in Germany to Brussels to join Marx and the growing cadre of members of the League of the Just now seeking home in Brussels. Later, Mary Burns, Engels' long-time companion, left Manchester, England to join Engels in Brussels.
@@ -93,6 +117,6 @@ Later that year, Europe experienced a series of protests, rebellions and often v
     '''
     triples, entities = extraction(text)
 
-    printGraph(triples)
+    print_graph(triples)
 
     pass
