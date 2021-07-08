@@ -112,16 +112,15 @@ def get_searx_results(keywords, site, num_results):
 
 
 def get_wikipedia_results(entity, hops=0, num_links=None):
-
     def get_wikipedia_results_recursive(hops, wiki_pages, num_links=None):
         text = ''
 
         if hops > 0:
             links = []
             for wiki in wiki_pages:
-                url = 'https://en.wikipedia.org/wiki/' + wiki['href']
+                url = 'https://en.wikipedia.org/' + wiki['href']
                 html = api_get(url, headers={'User-Agent': 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:74.0) '
-                                                       'Gecko/20100101 Firefox/74.0'})
+                                                           'Gecko/20100101 Firefox/74.0'})
 
                 content = Bs(html.text, features="lxml").find(class_='mw-parser-output')
                 # To get rid of this warning, pass the additional argument 'features="lxml"' to the BeautifulSoup constructor.
@@ -137,9 +136,9 @@ def get_wikipedia_results(entity, hops=0, num_links=None):
             text += get_wikipedia_results_recursive(hops - 1, links)
         else:
             for wiki in wiki_pages:
-                url = 'https://en.wikipedia.org/wiki/' + wiki['href']
+                url = 'https://en.wikipedia.org/' + wiki['href']
                 html = api_get(url, headers={'User-Agent': 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:74.0) '
-                                                       'Gecko/20100101 Firefox/74.0'})
+                                                           'Gecko/20100101 Firefox/74.0'})
 
                 content = Bs(html.text, features="lxml").find(class_='mw-parser-output')
                 # To get rid of this warning, pass the additional argument 'features="lxml"' to the BeautifulSoup constructor.
@@ -152,7 +151,7 @@ def get_wikipedia_results(entity, hops=0, num_links=None):
 
     url = 'https://en.wikipedia.org/wiki/' + entity
     html = api_get(url, headers={'User-Agent': 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:74.0) Gecko/20100101 '
-                                           'Firefox/74.0'})
+                                               'Firefox/74.0'})
 
     content = Bs(html.text, features="lxml").find(class_='mw-parser-output')
     # To get rid of this warning, pass the additional argument 'features="lxml"' to the BeautifulSoup constructor.
@@ -171,7 +170,8 @@ def get_wikipedia_results(entity, hops=0, num_links=None):
     else:
         for child in content.children:
             if child.name == 'p':
-                text += re.sub(' +', ' ', child.get_text().replace("\n", " ")) + "\n"
+                # text += re.sub(' +', ' ', child.get_text().replace("\n", " ")) + "\n"
+                text += re.sub(' +', ' ', re.sub('\[.*?\]', '', child.get_text().replace("\n", " "))) + "\n"
 
     return text
 
