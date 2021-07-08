@@ -22,9 +22,9 @@ class News:
         self.generator = generator
 
 
-def get_news_data(url, num_words=None):
+def get_news_data(news_url, num_words=None):
     """Retrieves information about the news article"""
-    article = Article(url)
+    article = Article(news_url)
     article.download()
     article.parse()
     article.nlp()
@@ -39,8 +39,15 @@ def get_news_data(url, num_words=None):
         if author not in authors:
             authors.append(author)
 
-    return News(article.title, authors, metadata['description'], article.text, article.summary, summary_,
-                article.is_valid_body() and article.is_valid_url(), metadata['og']['site_name'], metadata['generator'])
+    try:
+        site_name = metadata['og']['site_name']
+        generator = metadata['generator']
+    except:
+        site_name = 'site_name'
+        generator = 'generator'
+
+    return News(article.title, authors, 'description', article.text, article.summary, summary_,
+                article.is_valid_body() and article.is_valid_url(), site_name, generator)
 
 
 def get_true_news(keywords, num_results=10):
