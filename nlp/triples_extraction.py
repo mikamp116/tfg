@@ -81,15 +81,15 @@ def bulk_extraction(true_news_link_list):
 
 
 def print_graph(triples):
-    G = nx.Graph()
+    g = nx.Graph()
     for triple in triples:
-        G.add_node(triple[0])
-        G.add_node(triple[1])
-        G.add_node(triple[2])
-        G.add_edge(triple[0], triple[1])
-        G.add_edge(triple[1], triple[2])
+        g.add_node(triple[0])
+        g.add_node(triple[1])
+        g.add_node(triple[2])
+        g.add_edge(triple[0], triple[1])
+        g.add_edge(triple[1], triple[2])
 
-    pos = nx.spring_layout(G)
+    pos = nx.spring_layout(g)
 
 
     # plt.figure()
@@ -99,8 +99,8 @@ def print_graph(triples):
     # plt.axis('off')
 
     plt.figure(figsize=(100, 60))
-    d = dict(G.degree)
-    nx.draw(G, pos=pos, node_color='orange',
+    d = dict(g.degree)
+    nx.draw(g, pos=pos, node_color='orange',
             with_labels=False,
             node_size=[d[k] * 300 for k in d])
     for node, (x, y) in pos.items():
