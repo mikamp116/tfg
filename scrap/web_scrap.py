@@ -52,70 +52,35 @@ def get_news_data(news_url, num_words=None):
 
 def get_true_news(keywords, num_results=10):
 
-    def get_google_results(keywords, site, num_results):
-        """Retrieves a list with the 10 first results of Google searching the given keywords in the specified site"""
+    def get_searx_results(keyw, site, num_res=10):
+        # return get_standalone_searx(keywords + ' site:' + site)
+        # cummulative_links = []
+        searx_text = keyw + ' site:' + site
+        searx_text_secure = parse.quote(searx_text)
+        base_url = 'http://127.0.0.1:8888/search'
+        params = {
+            'q': searx_text,
+            'categories': 'general',
+            'lang': 'en',
+            'engines': 'google,bing,qwant,wikidata,startpage,yahoo',
+            'format': 'json'}
+        response = api_get(base_url, params=params).json()
+        # response = api_get('http://127.0.0.1:8888/search?q=eu%20bans%20uk%20flights&categories=general&lang=en&engines=google,duckduckgo,bing,qwant,wikidata,startpage,yahoo&format=json').json()
 
-        user_agent = {'User-Agent': 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:74.0) Gecko/20100101 Firefox/74.0'}
-
-        usr_agent = {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) '
-                          'Chrome/61.0.3163.100 Safari/537.36'}
-
-        def fetch_results(keywords, num_results):
-            escaped_search_term = keywords.replace(' ', '+')
-
-            # google_url = 'https://www.google.com/search?q=' + escaped_search_term + '+site%3A' + site + '&num=' \
-            #              + str(num_results) + 'hl=en'
-
-            google_url = 'https://duckduckgo.com/?q=' + escaped_search_term + '+site%3A' + site
-
-            response = api_get(google_url)
-            #response.raise_for_status()
-
-            return response
-
-        def parse_results(raw_html):
-            soup = Bs(raw_html, 'html.parser')
-            result_block = soup.find_all('div', attrs={'class': 'g'})
-            for result in result_block:
-                link = result.find('a', href=True)
-                title = result.find('h3')
-                if link and title:
-                    yield link['href']
-
-        response = fetch_results(keywords, num_results)
-        return list(parse_results(response.text))
-        # links = list(parse_results(response.text))
-        # if len(links) < num_results:
-        #     return links[:num_results]
-        # return links
-
-
+        # for result in response['results']:
+        #     if len(cummulative_links) < num_res:
+        #         cummulative_links.append(result['url'])
+        #
+        # return cummulative_links
+        return [result['url'] for index, result in enumerate(response['results']) if index < num_res]
 
     sources = ['theguardian.com', 'bbc.com', 'news.sky.com', 'independent.co.uk']
-    links = [get_searx_results(keywords, site, num_results) for site in tqdm(sources, desc="Getting Searx results")]
+    # links = [get_searx_results(keywords, site, num_results) for site in tqdm(sources, desc="Getting Searx results")]
 
     # related news
 
-    return links
-
-def get_searx_results(keywords, site, num_results):
-    # return get_standalone_searx(keywords + ' site:' + site)
-    cummulative_links = []
-    searx_text = parse.quote(keywords + ' site:' + site)
-    # base_url = 'http://127.0.0.1:8888/search'
-    # params = {
-    #     'q': searx_text,
-    #     'categories': 'general',
-    #     'lang': 'en',
-    #     'format': 'json'}
-    # response = api_get(base_url, params=params).json()
-    response = api_get('http://127.0.0.1:8888/search?q=eu%20bans%20uk%20flights&categories=general&lang=en&engines=google,duckduckgo,bing,qwant,wikidata,startpage,yahoo&format=json').json()
-
-    for result in response['results']:
-        cummulative_links.append(result)
-
-    return cummulative_links
+    # return links
+    return [get_searx_results(keywords, site, num_results) for site in tqdm(sources, desc="Getting Searx results")]
 
 
 def get_wikipedia_results(entity, hops=0, num_links=None):
