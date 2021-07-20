@@ -97,13 +97,14 @@ def get_wikipedia_results(entity, hops=0, num_links=None):
                 content = Bs(html.text, features="lxml").find(class_='mw-parser-output')
                 # To get rid of this warning, pass the additional argument 'features="lxml"' to the BeautifulSoup constructor.
 
-                for child in content.children:
-                    if child.name == 'p':
-                        text += re.sub(' +', ' ', child.get_text().replace("\n", " ")) + "\n"
-                        for link in child.find_all('a'):
-                            if link.has_attr("href") and num_links is not None:
-                                if link["href"].startswith("/wiki/") and len(links) < num_links:
-                                    links.append(link)
+                if content is not None:
+                    for child in content.children:
+                        if child.name == 'p':
+                            text += re.sub(' +', ' ', child.get_text().replace("\n", " ")) + "\n"
+                            for link in child.find_all('a'):
+                                if link.has_attr("href") and num_links is not None:
+                                    if link["href"].startswith("/wiki/") and len(links) < num_links:
+                                        links.append(link)
 
             text += get_wikipedia_results_recursive(hops - 1, links)
         else:
@@ -115,9 +116,10 @@ def get_wikipedia_results(entity, hops=0, num_links=None):
                 content = Bs(html.text, features="lxml").find(class_='mw-parser-output')
                 # To get rid of this warning, pass the additional argument 'features="lxml"' to the BeautifulSoup constructor.
 
-                for child in content.children:
-                    if child.name == 'p':
-                        text += re.sub(' +', ' ', child.get_text().replace("\n", " ")) + "\n"
+                if content is not None:
+                    for child in content.children:
+                        if child.name == 'p':
+                            text += re.sub(' +', ' ', child.get_text().replace("\n", " ")) + "\n"
 
         return text
 
@@ -129,21 +131,22 @@ def get_wikipedia_results(entity, hops=0, num_links=None):
     # To get rid of this warning, pass the additional argument 'features="lxml"' to the BeautifulSoup constructor.
     text = ''
 
-    if hops > 0:
-        links = []
-        for child in content.children:
-            if child.name == 'p':
-                text += re.sub(' +', ' ', child.get_text().replace("\n", " ")) + "\n"
-                for link in child.find_all('a'):
-                    if link.has_attr("href") and num_links is not None:
-                        if link["href"].startswith("/wiki/") and len(links) < num_links:
-                            links.append(link)
-        text += get_wikipedia_results_recursive(hops - 1, links, num_links)
-    else:
-        for child in content.children:
-            if child.name == 'p':
-                # text += re.sub(' +', ' ', child.get_text().replace("\n", " ")) + "\n"
-                text += re.sub(' +', ' ', re.sub('\[.*?\]', '', child.get_text().replace("\n", " "))) + "\n"
+    if content is not None:
+        if hops > 0:
+            links = []
+            for child in content.children:
+                if child.name == 'p':
+                    text += re.sub(' +', ' ', child.get_text().replace("\n", " ")) + "\n"
+                    for link in child.find_all('a'):
+                        if link.has_attr("href") and num_links is not None:
+                            if link["href"].startswith("/wiki/") and len(links) < num_links:
+                                links.append(link)
+            text += get_wikipedia_results_recursive(hops - 1, links, num_links)
+        else:
+            for child in content.children:
+                if child.name == 'p':
+                    # text += re.sub(' +', ' ', child.get_text().replace("\n", " ")) + "\n"
+                    text += re.sub(' +', ' ', re.sub('\[.*?\]', '', child.get_text().replace("\n", " "))) + "\n"
 
     return text
 
@@ -156,10 +159,14 @@ if __name__ == '__main__':
 
     # links = get_true_news("wannacry attacks corporation")
 
+    w = get_wikipedia_results('Germany', hops=7, num_links=500)
+    a = len(w)
     links = []
 
-    for i in trange(500):
-        res = get_searx_results('eu bans uk flights', 'bbc.com', 10)
-        links.append(res)
+    # for i in trange(500):
+    #     res = get_searx_results('eu bans uk flights', 'bbc.com', 10)
+    #     links.append(res)
+    search_text = 'ue bans uk flights'
+    search_results = get_true_news(search_text)
 
     pass
