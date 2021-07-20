@@ -8,19 +8,19 @@ from tqdm import tqdm, trange
 from scrap import web_scrap as ws
 
 
-def resolve_coreferences(nlp, text):
-    """
-    Resolves text coreferences such as in 'The girl loves her dog. She (the girl) loves him (her dog).'
+# def resolve_coreferences(nlp, text):
+#     """
+#     Resolves text coreferences such as in 'The girl loves her dog. She (the girl) loves him (her dog).'
+#
+#     :param nlp: spacy natural language processor
+#     :param text: str with input news content
+#     :return: str containing news content without coreferences
+#     """
+#     neuralcoref.add_to_pipe(nlp)
+#     return nlp(text)._.coref_resolved
 
-    :param nlp: spacy natural language processor
-    :param text: str with input news content
-    :return: str containing news content without coreferences
-    """
-    neuralcoref.add_to_pipe(nlp)
-    return nlp(text)._.coref_resolved
 
-
-def extraction(text):
+def extraction(text, entity_extraction=True):
     """
     Extract relations between entities present in the news item and packs them in (head, relation, tail) triples.
 
@@ -45,16 +45,19 @@ def extraction(text):
                                   (token.pos == 100 and (token.tag_ == 'VBD' or token.dep_ == 'ROOT'))
                                else token.text + token.whitespace_ for token in doc])
 
-    show_linguistic_features([doc])
+    # show_linguistic_features([doc])
 
     with StanfordOpenIE() as client:
         triples_dict = client.annotate(lemmatized_text)
 
-    valid_ents = ['PERSON', 'PER', 'NORP', 'FAC','FACILITY', 'ORG', 'GPE', 'LOC', 'PRODUCT', 'EVENT', 'WORK_OF_ART',
-                   'LAW', 'LANGUAGE', 'DATE', 'MONEY', 'MISC', 'EVT', 'PROD', 'GPE_LOC', 'GPE_ORG']
-    entities = [ent.text for ent in doc.ents if ent.label_ in valid_ents]
+    if entity_extraction:
+        valid_ents = ['PERSON', 'PER', 'NORP', 'FAC','FACILITY', 'ORG', 'GPE', 'LOC', 'PRODUCT', 'EVENT', 'WORK_OF_ART',
+                       'LAW', 'LANGUAGE', 'DATE', 'MONEY', 'MISC', 'EVT', 'PROD', 'GPE_LOC', 'GPE_ORG']
+        entities = [ent.text for ent in doc.ents if ent.label_ in valid_ents]
 
-    return [(d['subject'], d['relation'], d['object']) for d in triples_dict], list(set(entities))
+        return [(d['subject'], d['relation'], d['object']) for d in triples_dict], list(set(entities))
+    else:
+        return [(d['subject'], d['relation'], d['object']) for d in triples_dict]
 
 
 def bulk_extraction(true_news_link_list):
