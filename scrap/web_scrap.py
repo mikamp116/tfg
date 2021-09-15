@@ -5,6 +5,7 @@ from bs4 import BeautifulSoup as Bs
 from requests import get as api_get
 from urllib import parse
 from tqdm import tqdm, trange
+import main
 
 
 class News:
@@ -50,37 +51,40 @@ def get_news_data(news_url, num_words=None):
                 article.is_valid_body() and article.is_valid_url(), site_name, generator)
 
 
-def get_true_news(keywords, num_results=10):
+def get_true_news(triples_list, num_results=10):
 
-    def get_searx_results(keyw, site, num_res=10):
-        # return get_standalone_searx(keywords + ' site:' + site)
-        # cummulative_links = []
-        searx_text = keyw + ' site:' + site
-        searx_text_secure = parse.quote(searx_text)
+    def get_searx_results(keyw, i, num_res=10):
+        # keywords = ' '.join(keyw)
+        searx_text = keyw + ' site:theguardian.com OR site:bbc.com OR site:news.sky.com OR site:independent.co.uk'
+        # searx_text_secure = parse.quote(searx_text)
         base_url = 'http://127.0.0.1:8888/search'
+        engines = ['google', 'duckduckgo', 'startpage']
+        # engines = ['google','duckduckgo','startpage','bing','qwant','wikidata']
         params = {
             'q': searx_text,
             'categories': 'general',
             'lang': 'en',
-            'engines': 'google,bing,qwant,wikidata,startpage,yahoo',
+            'engines': engines[i % len(engines)],
             'format': 'json'}
-        response = api_get(base_url, params=params).json()
+        headers = {'User-Agent': 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:74.0) Gecko/20100101 Firefox/74.0'}
+        response = api_get(base_url, params=params, headers=headers).json()
         # response = api_get('http://127.0.0.1:8888/search?q=eu%20bans%20uk%20flights&categories=general&lang=en&engines=google,duckduckgo,bing,qwant,wikidata,startpage,yahoo&format=json').json()
 
-        # for result in response['results']:
-        #     if len(cummulative_links) < num_res:
-        #         cummulative_links.append(result['url'])
-        #
-        # return cummulative_links
         return [result['url'] for index, result in enumerate(response['results']) if index < num_res]
 
-    sources = ['theguardian.com', 'bbc.com', 'news.sky.com', 'independent.co.uk']
-    # links = [get_searx_results(keywords, site, num_results) for site in tqdm(sources, desc="Getting Searx results")]
+    # sources = ['theguardian.com', 'bbc.com', 'news.sky.com', 'independent.co.uk']
 
     # related news
 
-    # return links
-    return [get_searx_results(keywords, site, num_results) for site in tqdm(sources, desc="Getting Searx results")]
+    # return [get_searx_results(keywords, site, num_results) for site in sources]
+    return [get_searx_results(' '.join(triple), index, num_results)
+            for index, triple in enumerate(tqdm(triples_list, desc="Getting articles for true news..."))]
+
+    # # list_return = [get_searx_results(keywords, site, num_results) for keywords in keywords_list for site in tqdm(sources, desc="Getting Searx results")]
+    # list_return = [get_searx_results(keywords, site, num_results) for keywords in keywords_list for site in sources]
+    # main.lock.acquire()
+    # main.true_news_link_list.append(list_return)
+    # main.lock.release()
 
 
 def get_wikipedia_results(entity, hops=0, num_links=None):
