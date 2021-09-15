@@ -3,9 +3,7 @@ from summa.summarizer import summarize
 import re
 from bs4 import BeautifulSoup as Bs
 from requests import get as api_get
-from urllib import parse
-from tqdm import tqdm, trange
-import main
+from tqdm import tqdm
 
 
 class News:
@@ -54,9 +52,7 @@ def get_news_data(news_url, num_words=None):
 def get_true_news(triples_list, num_results=10):
 
     def get_searx_results(keyw, i, num_res=10):
-        # keywords = ' '.join(keyw)
         searx_text = keyw + ' site:theguardian.com OR site:bbc.com OR site:news.sky.com OR site:independent.co.uk'
-        # searx_text_secure = parse.quote(searx_text)
         base_url = 'http://127.0.0.1:8888/search'
         engines = ['google', 'duckduckgo', 'startpage']
         # engines = ['google','duckduckgo','startpage','bing','qwant','wikidata']
@@ -68,7 +64,6 @@ def get_true_news(triples_list, num_results=10):
             'format': 'json'}
         headers = {'User-Agent': 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:74.0) Gecko/20100101 Firefox/74.0'}
         response = api_get(base_url, params=params, headers=headers).json()
-        # response = api_get('http://127.0.0.1:8888/search?q=eu%20bans%20uk%20flights&categories=general&lang=en&engines=google,duckduckgo,bing,qwant,wikidata,startpage,yahoo&format=json').json()
 
         return [result['url'] for index, result in enumerate(response['results']) if index < num_res]
 
@@ -79,12 +74,6 @@ def get_true_news(triples_list, num_results=10):
     # return [get_searx_results(keywords, site, num_results) for site in sources]
     return [get_searx_results(' '.join(triple), index, num_results)
             for index, triple in enumerate(tqdm(triples_list, desc="Getting articles for true news..."))]
-
-    # # list_return = [get_searx_results(keywords, site, num_results) for keywords in keywords_list for site in tqdm(sources, desc="Getting Searx results")]
-    # list_return = [get_searx_results(keywords, site, num_results) for keywords in keywords_list for site in sources]
-    # main.lock.acquire()
-    # main.true_news_link_list.append(list_return)
-    # main.lock.release()
 
 
 def get_wikipedia_results(entity, hops=0, num_links=None):
@@ -164,13 +153,6 @@ if __name__ == '__main__':
     # links = get_true_news("wannacry attacks corporation")
 
     w = get_wikipedia_results('Germany', hops=7, num_links=500)
-    a = len(w)
-    links = []
 
-    # for i in trange(500):
-    #     res = get_searx_results('eu bans uk flights', 'bbc.com', 10)
-    #     links.append(res)
     search_text = 'ue bans uk flights'
     search_results = get_true_news(search_text)
-
-    pass
